@@ -22,19 +22,20 @@ def loadData():
     return trainData, validData, testData, trainTarget, validTarget, testTarget
 
 def MSE(W, b, x, y, reg):
-    # Set up inputs as appropriate matrices and vectors for vectorized computation
-    
-    
-    meanSquaredError = 1
-    
+    N = x.shape[0] #number of data vectors we have
+    meanSquaredError = (1/(2*N))*(np.linalg.norm((np.matmul(x, W)) + b - y)**2 
+                        + (reg/2)*(np.linalg.norm(W))**2)
+
     return meanSquaredError
 
 def gradMSE(W, b, x, y, reg):
     # Your implementation here
+    
     return 
     
 def crossEntropyLoss(W, b, x, y, reg):
     # Your implementation here
+    
     return 
     
 def gradCE(W, b, x, y, reg):
