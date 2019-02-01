@@ -10,7 +10,7 @@ def loadData():
         dataIndx = (Target==posClass) + (Target==negClass)
         Data = Data[dataIndx]/255.
         Target = Target[dataIndx].reshape(-1, 1)
-        Target[Target==posClass] = 1
+        Target[Target==posClass] = 1 
         Target[Target==negClass] = 0
         np.random.seed(421)
         randIndx = np.arange(len(Data))
@@ -35,8 +35,9 @@ def gradMSE(W, b, x, y, reg):
     grad_wrtb = (1/N)*(np.matmul(x,W) + b - y).sum()  #checked with test and is correct
     #Gradient with respect to W, the last term, python adds it to every row, getting the intended effect
     grad_wrtW = (1/N)*(np.matmul(x,W) + b - y)
-    grad_wrtW = (grad_wrtW*(x.T)).T + reg*W.transpose() #problem here, I want to multiple the matmul componentwise onto x
-    
+    grad_wrtW = np.multiply(grad_wrtW,x).sum(axis=0) + reg*W.T 
+    grad_wrtW = grad_wrtW.T    
+
     return grad_wrtb, grad_wrtW
     
 def crossEntropyLoss(W, b, x, y, reg):
@@ -48,9 +49,17 @@ def gradCE(W, b, x, y, reg):
     # Your implementation here
     return
     
-def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS):
-    # Your implementation here
-    return
+def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg): #version with no EPS, add erorr tol
+    for i in range(0, iterations):
+        error = MSE(W, b, trainingData, trainingLabels, reg)
+        grad_wrtb, grad_wrtW = gradMSE(W, b, trainingData, trainingLabels, reg)
+        v_t_W = -grad_wrtW
+        v_t_b = -grad_wrtb
+        W = W + alpha*v_t_W
+        b = b + alpha*v_t_b
+        print('iteration = %d error = %f' % (i, error))
+    
+    return W, b
     
 def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rate=None):
     # Your implementation here
