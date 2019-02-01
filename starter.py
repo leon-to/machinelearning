@@ -24,14 +24,20 @@ def loadData():
 def MSE(W, b, x, y, reg):
     N = x.shape[0] #number of data vectors we have
     meanSquaredError = (1/(2*N))*(np.linalg.norm((np.matmul(x, W)) + b - y)**2 
-                        + (reg/2)*(np.linalg.norm(W))**2)
+                        + (reg/2)*(np.linalg.norm(W))**2) #I tested with test data and worked
 
     return meanSquaredError
 
-def gradMSE(W, b, x, y, reg):
-    # Your implementation here
     
-    return 
+def gradMSE(W, b, x, y, reg):
+    N = x.shape[0] #number of data vectors we have   
+    #Gradient with respect to b
+    grad_wrtb = (1/N)*(np.matmul(x,W) + b - y).sum()  #checked with test and is correct
+    #Gradient with respect to W, the last term, python adds it to every row, getting the intended effect
+    grad_wrtW = (1/N)*(np.matmul(x,W) + b - y)
+    grad_wrtW = (grad_wrtW*(x.T)).T + reg*W.transpose() #problem here, I want to multiple the matmul componentwise onto x
+    
+    return grad_wrtb, grad_wrtW
     
 def crossEntropyLoss(W, b, x, y, reg):
     # Your implementation here
