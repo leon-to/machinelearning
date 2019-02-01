@@ -64,3 +64,21 @@ def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg): #v
 def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rate=None):
     # Your implementation here
     return
+    
+def classify(W, b, x, y):
+    y_hat = np.matmul(x,W) + b
+    
+    #threshold
+    indicesPos = y_hat >= 0.5
+    indicesNeg = y_hat < 0.5
+    y_hat[indicesPos] = 1
+    y_hat[indicesNeg] = 0
+
+    accuracy = np.mean( y_hat == y )
+    misclassIndices = y_hat != y
+    print('accuracy is %f' % accuracy)
+    
+    return y_hat, accuracy, misclassIndices
+    
+    
+    
