@@ -2,6 +2,18 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
+ #object for saving performance data every iteration in grad descent
+class Performance:
+    def __init__(self, iterations): #needed to initialize arrays
+        self.iterations = iterations
+        self.errorTrain = np.empty(iterations)
+        self.errorValid = np.empty(iterations)
+        self.errorTest = np.empty(iterations)
+        self.trainSetAcc = np.empty(iterations)
+        self.validSetAcc = np.empty(iterations)
+        self.testSetAcc = np.empty(iterations)
+        
+        
 def loadData():
     with np.load('notMNIST.npz') as data :
         Data, Target = data ['images'], data['labels']
@@ -46,21 +58,34 @@ def crossEntropyLoss(W, b, x, y, reg):
     return 
     
 def gradCE(W, b, x, y, reg):
-    # Your implementation here
+    # Your implementation here 
     return
     
-def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, error_tol): 
+def grad_descent(W, b, trainData, trainTarget, alpha, iterations, reg, error_tol, \
+                 validData, validTarget, testData, testTarget ):                       
+    
+    perfRecord = Performance(iterations) #Make the object to store performance
     
     errorDifference = 0 #used in stopping condition
     oldError = np.inf
-    for i in range(1, iterations + 1):
-        error = MSE(W, b, trainingData, trainingLabels, reg)
-        grad_wrtb, grad_wrtW = gradMSE(W, b, trainingData, trainingLabels, reg)
+    for i in range(0, iterations):
+        error = MSE(W, b, trainData, trainTarget, reg)
+        grad_wrtb, grad_wrtW = gradMSE(W, b, trainData, trainTarget, reg)
         v_t_W = -grad_wrtW
         v_t_b = -grad_wrtb
         W = W + alpha*v_t_W
         b = b + alpha*v_t_b
         print('iteration = %d error = %f' % (i, error))
+        
+        
+        #Save the per iteration errors: Error, Training Set performance, 
+        #Validation Set Performance, Test Set performance 
+        perfRecord.errorTrain[i] = error
+        perfRecord.errorValid[i] = MSE(W, b, validData, validTarget, reg)
+        perfRecord.errorTest[i] = MSE(W, b, testData, testTarget, reg)
+        _, perfRecord.trainSetAcc[i] ,_ = classify(W, b, trainData, trainTarget)
+        _, perfRecord.validSetAcc[i] ,_ = classify(W, b, validData, validTarget)
+        _, perfRecord.testSetAcc[i] ,_ = classify(W, b, testData, testTarget)
         
         errorDifference = oldError - error 
         oldError = error
@@ -68,8 +93,9 @@ def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, err
         if errorDifference < error_tol:
             print("error_tol stop condition met")
             break
-    
-    return W, b
+        
+        
+    return W, b, perfRecord
     
 def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rate=None):
     # Your implementation here
