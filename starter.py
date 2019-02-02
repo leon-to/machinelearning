@@ -23,7 +23,7 @@ def loadData():
 
 def MSE(W, b, x, y, reg):
     N = x.shape[0] #number of data vectors we have
-    meanSquaredError = (1/(2*N))*(np.linalg.norm((np.matmul(x, W)) + b - y)**2 
+    meanSquaredError = ((1/(2*N))*(np.linalg.norm((np.matmul(x, W)) + b - y)**2) 
                         + (reg/2)*(np.linalg.norm(W))**2) #I tested with test data and worked
 
     return meanSquaredError
@@ -49,8 +49,11 @@ def gradCE(W, b, x, y, reg):
     # Your implementation here
     return
     
-def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg): #version with no EPS, add erorr tol
-    for i in range(0, iterations):
+def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, error_tol): 
+    
+    errorDifference = 0 #used in stopping condition
+    oldError = np.inf
+    for i in range(1, iterations + 1):
         error = MSE(W, b, trainingData, trainingLabels, reg)
         grad_wrtb, grad_wrtW = gradMSE(W, b, trainingData, trainingLabels, reg)
         v_t_W = -grad_wrtW
@@ -58,6 +61,13 @@ def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg): #v
         W = W + alpha*v_t_W
         b = b + alpha*v_t_b
         print('iteration = %d error = %f' % (i, error))
+        
+        errorDifference = oldError - error 
+        oldError = error
+        print('error diff is %f' % errorDifference)
+        if errorDifference < error_tol:
+            print("error_tol stop condition met")
+            break
     
     return W, b
     
@@ -76,7 +86,7 @@ def classify(W, b, x, y):
 
     accuracy = np.mean( y_hat == y )
     misclassIndices = y_hat != y
-    print('accuracy is %f' % accuracy)
+    print('From classify function: accuracy is %f' % accuracy)
     
     return y_hat, accuracy, misclassIndices
     

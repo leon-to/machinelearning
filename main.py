@@ -9,9 +9,11 @@ import matplotlib.pyplot as plt
 trainData, validData, testData, trainTarget, validTarget, testTarget = starter.loadData()
 
 #shape the data into proper dimensions and initialize some matrices
-W = np.zeros((784,1)) #weight matrix
+error_tol = 10**-7
+#W = np.zeros((784,1)) #weight matrix
+W = np.random.normal(0, 0.1, size = [784,1])
 b = 0#np.zeros((3500,1)) #bias matrix
-reg = 0 #regularization parameter
+reg = 0#0.1 #regularization parameter
 origTrainData = trainData
 origTestData = testData
 trainData = trainData.reshape([3500,784]) #train data matrix
@@ -34,19 +36,21 @@ epochs = 5000
 value = starter.MSE(W, b, trainData, trainTarget, reg) #call MSE that I just implemented, but I need to check it
 grad_wrtb, grad_wrtW = starter.gradMSE(W, b, trainData, trainTarget, reg)
 
-W,b = starter.grad_descent(W, b, trainData, trainTarget, alpha, epochs, reg)
+W,b = starter.grad_descent(W, b, trainData, trainTarget, alpha, epochs, reg, error_tol)
 
-#Check classifications
-#perform a classification
-#positive class is C, negative is J
-letterIndex = 77;
-print('classification is %f' % (np.matmul(testData[letterIndex,:], W) + b))
-plt.imshow(origTestData[letterIndex,:,:], cmap = 'gray')
 
 y_hat, accuracy, misclassIndices = starter.classify(W, b, testData, testTarget)
 
 
 
-
+#Old test code below
+#Check classifications
+#perform a classification
+#positive class is C, negative is J
+#==============================================================================
+# letterIndex = 77;
+# print('classification is %f' % (np.matmul(testData[letterIndex,:], W) + b))
+# plt.imshow(origTestData[letterIndex,:,:], cmap = 'gray')
+#==============================================================================
 
 
