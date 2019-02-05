@@ -18,43 +18,37 @@ origTestData = testData
 trainData = trainData.reshape([3500,784]) #train data matrix
 testData = testData.reshape([145,784]) #test data matrix
 validData = validData.reshape([100,784]) #validation data matrix
+
 alpha = 0.005
 epochs = 5000
-
-
-#very small test data
-#==============================================================================
-# W = np.matrix('1;1')
-# b = 1
-# trainData = np.matrix('1,1; 2,2; 3,3')
-# trainTarget = np.matrix('1;0;1')
-# reg = 0
-#==============================================================================
-                              
-
-#value = starter.MSE(W, b, trainData, trainTarget, reg) #call MSE that I just implemented, but I need to check it
-#grad_wrtb, grad_wrtW = starter.gradMSE(W, b, trainData, trainTarget, reg)
-#
-#W,b = starter.grad_descent(W, b, trainData, trainTarget, alpha, epochs, reg)
-#
-##Check classifications
-##perform a classification
-##positive class is C, negative is J
-#letterIndex = 77;
-#print('classification is %f' % (np.matmul(testData[letterIndex,:], W) + b))
-#plt.imshow(origTestData[letterIndex,:,:], cmap = 'gray')
-#
-#y_hat, accuracy, misclassIndices = starter.classify(W, b, testData, testTarget)
-
 x = trainData
 y = trainTarget
 reg = 0.1
-W, iteration, loss = part2.grad_descent(W, b, trainData, trainTarget, alpha, epochs, reg, 0.001)
 
+# =============================================================================
+# 2.2
+# dummy, dummy, loss1, acc1 = part2.grad_descent(W, b, trainData, trainTarget, 0.005, epochs, reg, 0.0000001)
+# dummy, dummy, loss2, acc2 = part2.grad_descent(W, b, trainData, trainTarget, 0.001, epochs, reg, 0.0000001)
+# dummy, dummy, loss3, acc3 = part2.grad_descent(W, b, trainData, trainTarget, 0.0001, epochs, reg, 0.0000001)
+# 
+# plt.figure(figsize=(15,15))
+# plt.ylabel('Loss')
+# plt.xlabel('Iterations')
+# plt.title('TrainingSet Error of Different Alpha vs. Iterations of Gradient Descent')
+# plt.plot(range(len(loss1)), loss1, '-r', label='0.005 (learning rate)')
+# plt.plot(range(len(loss2)), loss2, '-g', label='0.001')
+# plt.plot(range(len(loss3)), loss3, '-b', label='0.0001')
+# plt.legend(loc='upper right')
+# =============================================================================
+
+
+dummy, dummy, loss1, acc1 = part2.grad_descent(W, b, trainData, trainTarget, 0.005, epochs, reg, 0.0000001)
+dummy, dummy, loss2, acc2 = part2.grad_descent(W, b, trainData, trainTarget, 0.005, epochs, reg, 0.0000001, 'MSE')
+ 
 plt.figure(figsize=(15,15))
-plt.ylabel('Loss')
+plt.ylabel('Loss/Error')
 plt.xlabel('Iterations')
-plt.title('TrainingSet Error of Different Alpha vs. Iterations of Gradient Descent')
-plt.plot(iteration, loss)
-
-
+plt.title('Cross Entropy Loss and MSE loss')
+plt.plot(range(len(loss1)), loss1, '-r', label='Cross Entropy Loss')
+plt.plot(range(len(loss2)), loss2, '-g', label='MSE')
+plt.legend(loc='upper right')
