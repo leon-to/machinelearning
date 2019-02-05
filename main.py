@@ -29,31 +29,41 @@ epochs = 5000 #5000
 #%% Tensorflow part, Q4, MSE
 
 epochs = 700
-batch_size = 500
+batchSizeParams = [500] #[100, 700, 1750]
+
+perfRecordAll = {}
 
 W, b, y_pred, x, y, loss, training_op, reg = starter.buildGraph(lossType = 'MSE')
 
 #Question 3, batch gradient descent
-n = len(trainTarget)
-n_batches = int(n/batch_size)
 
 init = tf.global_variables_initializer()
 with tf.Session() as sess:
     sess.run(init)
-    for i in range(epochs):
-        indices = np.random.permutation(n)
-        featVectors = trainData[indices]
-        classes = trainTarget[indices]    
+    
+    for k in range(0, len(batchSizeParams)):
+        batch_size = batchSizeParams[k]
+        n = len(trainTarget)
+        n_batches = int(n/batch_size)
         
-        for j in range(0, n, batch_size):
-                        
-            #print(loss.eval())
-            sess.run(training_op, feed_dict = {x: featVectors, y: classes})
-            val = sess.run(loss, feed_dict = {x: featVectors, y: classes})
-            Weights = sess.run(W, feed_dict = {x: featVectors, y: classes})
-            Bias = sess.run(b, feed_dict = {x: featVectors, y: classes})
-            print('epoch #%i' % i)
-            _, accuracy, _ = starter.classify(Weights, Bias, trainData, trainTarget)
+        for i in range(epochs):
+            indices = np.random.permutation(n)
+            featVectors = trainData[indices]
+            classes = trainTarget[indices]    
+            
+            for j in range(0, n, batch_size):
+                            
+                #print(loss.eval())
+                sess.run(training_op, feed_dict = {x: featVectors, y: classes})
+                val = sess.run(loss, feed_dict = {x: featVectors, y: classes})
+                Weights = sess.run(W, feed_dict = {x: featVectors, y: classes})
+                Bias = sess.run(b, feed_dict = {x: featVectors, y: classes})
+                print('epoch #%i' % i)
+                _, accuracy, _ = starter.classify(Weights, Bias, trainData, trainTarget)
+                
+            #In the process of implementing saving the performance
+            perfRecordAll["{0}".format(batchSizeParams[k])] = perfRecord #save the data     
+                
         
 #==============================================================================
 #==============================================================================
