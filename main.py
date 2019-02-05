@@ -28,35 +28,61 @@ epochs = 5000 #5000
 
 #%% Tensorflow part, Q4, MSE
 
-epochs = 5000
+epochs = 700
 batch_size = 500
 
 W, b, y_pred, x, y, loss, training_op, reg = starter.buildGraph(lossType = 'MSE')
-#set up iterator
+
+#Question 3, batch gradient descent
+n = len(trainTarget)
+n_batches = int(n/batch_size)
+
+init = tf.global_variables_initializer()
+with tf.Session() as sess:
+    sess.run(init)
+    for i in range(epochs):
+        indices = np.random.permutation(n)
+        featVectors = trainData[indices]
+        classes = trainTarget[indices]    
+        
+        for j in range(0, n, batch_size):
+                        
+            #print(loss.eval())
+            sess.run(training_op, feed_dict = {x: featVectors, y: classes})
+            val = sess.run(loss, feed_dict = {x: featVectors, y: classes})
+            Weights = sess.run(W, feed_dict = {x: featVectors, y: classes})
+            Bias = sess.run(b, feed_dict = {x: featVectors, y: classes})
+            print('epoch #%i' % i)
+            _, accuracy, _ = starter.classify(Weights, Bias, trainData, trainTarget)
+        
+#==============================================================================
+#==============================================================================
+#Old test code
+# with tf.Session() as sess: #Used for viewing data
+#       print(sess.run(data_y))
+# 
+#       init = tf.global_variables_initializer()
+# with tf.Session() as sess:
+#     sess.run(init)
+#     
+#     for epoch in range(epochs):
+#         #print(loss.eval())
+#         sess.run(training_op, feed_dict = {x: trainData, y: trainTarget})
+#         val = sess.run(loss, feed_dict = {x: trainData, y: trainTarget})
+#         Weights = sess.run(W, feed_dict = {x: trainData, y: trainTarget})
+#         Bias = sess.run(b, feed_dict = {x: trainData, y: trainTarget})
+#         print('epoch #%i' % epoch)
+#         _, accuracy, _ = starter.classify(Weights, Bias, trainData, trainTarget)
+#         
+# #set up iterator
 #==============================================================================
 # dataset = tf.data.Dataset.from_tensor_slices((trainData, trainTarget))
 # dataset = dataset.repeat(epochs).batch(batch_size)
 # iterator = dataset.make_one_shot_iterator()
 # x, y = iterator.get_next()
+#=====================================
 #==============================================================================
 
-
-init = tf.global_variables_initializer()
-with tf.Session() as sess:
-    sess.run(init)
-    
-    for epoch in range(epochs):
-        #print(loss.eval())
-        sess.run(training_op, feed_dict = {x: trainData, y: trainTarget})
-        val = sess.run(loss, feed_dict = {x: trainData, y: trainTarget})
-        Weights = sess.run(W, feed_dict = {x: trainData, y: trainTarget})
-        Bias = sess.run(b, feed_dict = {x: trainData, y: trainTarget})
-        print('epoch #%i' % epoch)
-        _, accuracy, _ = starter.classify(Weights, Bias, testData, testTarget)
-        
-#==============================================================================
-# with tf.Session() as sess: #Used for viewing data
-#      print(sess.run(data_y))
 #==============================================================================
 
  #starter.classify(Weights, Bias, testData, testTarget)

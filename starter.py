@@ -117,20 +117,20 @@ def buildGraph(lossType=None):
         
         featureVectorDim = 784
         learnRate = 0.001
-        reg = 0.05
+        reg = 0.0
         
         #Initialize weight and bias tensors, regularizer for W
         regularizer = tf.contrib.layers.l2_regularizer(scale = reg)
-        W = tf.Variable(tf.truncated_normal([featureVectorDim,1], stddev = 0.1, name = 'weight'), dtype = tf.float32)
+        W = tf.Variable(tf.truncated_normal([featureVectorDim,1], stddev = 0.5, name = 'weight'), dtype = tf.float32)
         tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, W)
-        b = tf.Variable(0.0, name = 'bias', dtype = tf.float32)
+        b = tf.Variable(tf.truncated_normal([1,1], stddev = 0.5, name = 'bias'), dtype = tf.float32)
+        #b = tf.Variable(0.0, name = 'bias', dtype = tf.float32)
         
         
         #Tensors to hold the variables: data, labels and reg. 
         x = tf.placeholder(tf.float32, name = 'x')
         y = tf.placeholder(tf.float32, name = 'y')
-        #reg = tf.placeholder(tf.float32, name = 'reg')
-        
+        #reg = tf.placeholder(tf.float32, name = 'reg') 
         
         y_pred = tf.matmul(x, W, name = 'predictions') 
         y_pred = y_pred + b
