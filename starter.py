@@ -93,7 +93,7 @@ def grad_descent(W, b, trainData, trainTarget, alpha, iterations, reg, error_tol
         print('error diff is %f' % errorDifference)
         
         if errorDifference < error_tol:
-            
+            #Early stop, so array was initialized to be bigger than it needs to be, so resize
             perfRecord.testSetAcc.resize(i)
             perfRecord.validSetAcc.resize(i)
             perfRecord.trainSetAcc.resize(i)
@@ -106,9 +106,51 @@ def grad_descent(W, b, trainData, trainTarget, alpha, iterations, reg, error_tol
 
     return W, b, perfRecord
     
-def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rate=None):
-    # Your implementation here
-    return
+def buildGraph(lossType=None):
+    
+    
+    
+    assert (lossType == 'MSE' or lossType == 'CE')
+    tf.set_random_seed(421)
+    
+    if lossType == "MSE":
+        
+        featureVectorDim = 784
+        learnRate = 0.001
+        reg = 0.05
+        
+        #Initialize weight and bias tensors, regularizer for W
+        regularizer = tf.contrib.layers.l2_regularizer(scale = reg)
+        W = tf.Variable(tf.truncated_normal([featureVectorDim,1], stddev = 0.1, name = 'weight'), dtype = tf.float32)
+        tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, W)
+        b = tf.Variable(0.0, name = 'bias', dtype = tf.float32)
+        
+        
+        #Tensors to hold the variables: data, labels and reg. 
+        x = tf.placeholder(tf.float32, name = 'x')
+        y = tf.placeholder(tf.float32, name = 'y')
+        #reg = tf.placeholder(tf.float32, name = 'reg')
+        
+        
+        y_pred = tf.matmul(x, W, name = 'predictions') 
+        y_pred = y_pred + b
+        
+        #Loss tensor. 
+        reg_variables = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+        reg_term = tf.contrib.layers.apply_regularization(regularizer, reg_variables)  
+        loss = reg_term + tf.losses.mean_squared_error(labels = y, predictions = y_pred, weights = 1/2)
+        
+        #optimizer
+        optimizer = tf.train.AdamOptimizer(learning_rate = learnRate)
+        training_op = optimizer.minimize(loss)
+
+#==============================================================================
+#     elif loss == "CE":
+#         #Your implementation here
+# 
+#==============================================================================
+    
+    return W, b, y_pred, x, y, loss, training_op, reg
     
 def classify(W, b, x, y):
     y_hat = np.matmul(x,W) + b
