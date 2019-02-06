@@ -107,54 +107,48 @@ def grad_descent(W, b, trainData, trainTarget, alpha, iterations, reg, error_tol
     return W, b, perfRecord
     
 def buildGraph(B1=None, B2=None, eps=None, lossType=None, learning_rate=None):
-    
-    
-    
     assert (lossType == 'MSE' or lossType == 'CE')
     tf.set_random_seed(421)
     
-    if lossType == "MSE":
-        
-        featureVectorDim = 784
-        learnRate = 0.001
-        reg = 0.0
-        
-        #Initialize weight and bias tensors, regularizer for W
-        regularizer = tf.contrib.layers.l2_regularizer(scale = reg)
-        W = tf.Variable(tf.truncated_normal([featureVectorDim,1], stddev = 0.5, name = 'weight'), dtype = tf.float32)
-        tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, W)
-        b = tf.Variable(tf.truncated_normal([1,1], stddev = 0.5, name = 'bias'), dtype = tf.float32)
-        #b = tf.Variable(0.0, name = 'bias', dtype = tf.float32)
-        
-        
-        #Tensors to hold the variables: data, labels and reg. 
-        x = tf.placeholder(tf.float32, name = 'x')
-        y = tf.placeholder(tf.float32, name = 'y')
-        #reg = tf.placeholder(tf.float32, name = 'reg') 
-        
-        y_pred = tf.matmul(x, W, name = 'predictions') 
-        y_pred = y_pred + b
-        
-        #Loss tensor. 
-        reg_variables = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
-        reg_term = tf.contrib.layers.apply_regularization(regularizer, reg_variables)  
-        loss = reg_term + tf.losses.mean_squared_error(labels = y, predictions = y_pred, weights = 1/2)
-        
-        #optimizer
-        optimizer = tf.train.AdamOptimizer(learning_rate = learnRate, beta1 = B1, beta2 = B2, epsilon = eps)
-        training_op = optimizer.minimize(loss)
-
-#==============================================================================
-#     elif loss == "CE":
-#         #Your implementation here
-# 
-#==============================================================================
+    featureVectorDim = 784
+    learnRate = 0.001
+    reg = 0.0
     
-    return W, b, y_pred, x, y, loss, training_op, reg
+    #Initialize weight and bias tensors, regularizer for W
+    regularizer = tf.contrib.layers.l2_regularizer(scale = reg)
+    W = tf.Variable(tf.truncated_normal([featureVectorDim,1], stddev = 0.5, name = 'weight'), dtype = tf.float32)
+    tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, W)
+    b = tf.Variable(tf.truncated_normal([1,1], stddev = 0.5, name = 'bias'), dtype = tf.float32)
     
-def classify(W, b, x, y):
-    y_hat = np.matmul(x,W) + b
+    #Tensors to hold the variables: data, labels and reg. 
+    x = tf.placeholder(tf.float32, name = 'x')
+    y = tf.placeholder(tf.float32, name = 'y')
     
+    # A = y_predicted in MSE
+    A = tf.matmul(x, W, name = 'predictions') + b
+    
+    #Loss tensor. 
+    reg_variables = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+    reg_term = tf.contrib.layers.apply_regularization(regularizer, reg_variables)  
+    
+    if lossType == 'MSE':
+        loss = reg_term + tf.losses.mean_squared_error(labels = y, predictions = A, weights = 1/2)
+    elif lossType == 'CE':
+        loss = reg_term + tf.losses.sigmoid_cross_entropy(multi_class_labels = y, logits = A)
+        
+    #optimizer
+    optimizer = tf.train.AdamOptimizer(learning_rate = learnRate, beta1 = B1, beta2 = B2, epsilon = eps)
+    training_op = optimizer.minimize(loss)
+    
+    return W, b, x, y, loss, training_op, reg
+    
+def classify(W, b, x, y, lossType='MSE'):
+    A = np.matmul(x,W) + b
+    if lossType == 'MSE':
+        y_hat = A
+    elif lossType == 'CE':
+        y_hat = 1 / (1+np.exp(-1 * A))
+        
     #threshold
     indicesPos = y_hat >= 0.5
     indicesNeg = y_hat < 0.5
