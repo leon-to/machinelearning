@@ -27,17 +27,20 @@ epochs = 5000 #5000
 
 
 
+
+
 #%% Q4a, MSE
 
 epochs = 700
 batch_size = 500
 B1params = [0.95, 0.99] #[500] #[100, 700, 1750]
+B2=0.999; eps=1e-8;
 
 perfRecordAll = {}
     
 for k in range(0, len(B1params)):
     B1 = B1params[k]
-    W, b, y_pred, x, y, loss, training_op, reg = starter.buildGraph(lossType = 'MSE', beta1 = B1)
+    W, b, y_pred, x, y, loss, training_op, reg = starter.buildGraph(lossType = 'MSE', B1 = B1, B2 = B2, eps = eps)
     #Question 3, batch gradient descent
     init = tf.global_variables_initializer()
     with tf.Session() as sess:   
@@ -76,9 +79,29 @@ for k in range(0, len(B1params)):
         perfRecordAll["{0}".format(B1params[k])] = perfRecord #save the data     
 
 
+#%% Plots 
 
+#accuracies
+plt.figure(figsize=(15,7))
+plt.subplot(1, 2, 1)
+plt.ylabel('Accuracy')
+plt.xlabel('Iterations')
+plt.title('TrainingSet Accuracy of Different Beta1 vs. Iterations')
+plt.plot(perfRecordAll["0.95"].trainSetAcc, 'r')
+plt.plot(perfRecordAll["0.99"].trainSetAcc, 'b') 
+plt.legend(['Beta1 0.95, fin. acc = %f' % perfRecordAll["0.95"].trainSetAcc[-1] \
+            ,'Beta1 0.99 fin. acc = %f' % perfRecordAll["0.99"].trainSetAcc[-1]], loc = 4)
 
+plt.subplot(1, 2, 2)
+plt.ylabel('Accuracy')
+plt.xlabel('Iterations')
+plt.title('ValidSet Accuracy of Different Beta1 vs. Iterations')
+plt.plot(perfRecordAll["0.95"].validSetAcc, 'r')
+plt.plot(perfRecordAll["0.99"].validSetAcc, 'b') 
+plt.legend(['Beta1 0.95, fin. acc = %f' % perfRecordAll["0.95"].validSetAcc[-1] \
+            ,'Beta1 0.99 fin. acc = %f' % perfRecordAll["0.99"].validSetAcc[-1]], loc = 4)
 
+plt.savefig("Accuracy plot P3Q4.png")
 
 
 

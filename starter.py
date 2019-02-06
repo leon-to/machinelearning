@@ -141,7 +141,7 @@ def buildGraph(B1=None, B2=None, eps=None, lossType=None, learning_rate=None):
         loss = reg_term + tf.losses.mean_squared_error(labels = y, predictions = y_pred, weights = 1/2)
         
         #optimizer
-        optimizer = tf.train.AdamOptimizer(learning_rate = learnRate)
+        optimizer = tf.train.AdamOptimizer(learning_rate = learnRate, beta1 = B1, beta2 = B2, epsilon = eps)
         training_op = optimizer.minimize(loss)
 
 #==============================================================================
