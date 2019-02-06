@@ -26,25 +26,26 @@ alpha = 0.005
 epochs = 5000 #5000
 
 
-#%% Tensorflow part, Q4, MSE
+
+#%% Q4a, MSE
 
 epochs = 700
-batchSizeParams = [500] #[100, 700, 1750]
+batch_size = 500
+B1params = [0.95, 0.99] #[500] #[100, 700, 1750]
 
 perfRecordAll = {}
-
-W, b, y_pred, x, y, loss, training_op, reg = starter.buildGraph(lossType = 'MSE')
-
-#Question 3, batch gradient descent
-
-init = tf.global_variables_initializer()
-with tf.Session() as sess:
-    sess.run(init)
     
-    for k in range(0, len(batchSizeParams)):
-        batch_size = batchSizeParams[k]
+for k in range(0, len(B1params)):
+    B1 = B1params[k]
+    W, b, y_pred, x, y, loss, training_op, reg = starter.buildGraph(lossType = 'MSE', beta1 = B1)
+    #Question 3, batch gradient descent
+    init = tf.global_variables_initializer()
+    with tf.Session() as sess:   
+        sess.run(init) #make a new graph. 
+        
         n = len(trainTarget)
         n_batches = int(n/batch_size)
+        perfRecord = starter.Performance(epochs)
         
         for i in range(epochs):
             indices = np.random.permutation(n)
@@ -55,17 +56,173 @@ with tf.Session() as sess:
                             
                 #print(loss.eval())
                 sess.run(training_op, feed_dict = {x: featVectors, y: classes})
-                val = sess.run(loss, feed_dict = {x: featVectors, y: classes})
+                error = sess.run(loss, feed_dict = {x: featVectors, y: classes})
                 Weights = sess.run(W, feed_dict = {x: featVectors, y: classes})
-                Bias = sess.run(b, feed_dict = {x: featVectors, y: classes})
-                print('epoch #%i' % i)
+                Bias = sess.run(b, feed_dict = {x: featVectors, y: classes})                
                 _, accuracy, _ = starter.classify(Weights, Bias, trainData, trainTarget)
                 
+        
+            print('epoch #%i' % i)
             #In the process of implementing saving the performance
-            perfRecordAll["{0}".format(batchSizeParams[k])] = perfRecord #save the data     
+            #Save the per iteration errors: Error, Training Set performance, 
+            #Validation Set Performance, Test Set performance 
+            perfRecord.errorTrain[i] = sess.run(loss, feed_dict = {x: trainData, y: trainTarget})
+            perfRecord.errorValid[i] = sess.run(loss, feed_dict = {x: validData, y: validTarget})
+            perfRecord.errorTest[i] = sess.run(loss, feed_dict = {x: testData, y: testTarget})
+            _, perfRecord.trainSetAcc[i] ,_ = starter.classify(Weights, Bias, trainData, trainTarget)
+            _, perfRecord.validSetAcc[i] ,_ = starter.classify(Weights, Bias, validData, validTarget)
+            _, perfRecord.testSetAcc[i] ,_ = starter.classify(Weights, Bias, testData, testTarget)
+            
+        perfRecordAll["{0}".format(B1params[k])] = perfRecord #save the data     
+
+
+
+
+
+
+
+
+
+
+
+
+
+#%% Tensorflow part, Q3, MSE
+
+epochs = 700
+batchSizeParams = [100, 700, 1750] #[500] #[100, 700, 1750]
+
+perfRecordAll = {}
+
+W, b, y_pred, x, y, loss, training_op, reg = starter.buildGraph(lossType = 'MSE')
+
+#Question 3, batch gradient descent
+
+init = tf.global_variables_initializer()
+with tf.Session() as sess:   
+    for k in range(0, len(batchSizeParams)):
+        sess.run(init) #make a new graph. 
+        
+        batch_size = batchSizeParams[k]
+        n = len(trainTarget)
+        n_batches = int(n/batch_size)
+        perfRecord = starter.Performance(epochs)
+        
+        for i in range(epochs):
+            indices = np.random.permutation(n)
+            featVectors = trainData[indices]
+            classes = trainTarget[indices]    
+            
+            for j in range(0, n, batch_size):
+                            
+                #print(loss.eval())
+                sess.run(training_op, feed_dict = {x: featVectors, y: classes})
+                error = sess.run(loss, feed_dict = {x: featVectors, y: classes})
+                Weights = sess.run(W, feed_dict = {x: featVectors, y: classes})
+                Bias = sess.run(b, feed_dict = {x: featVectors, y: classes})                
+                _, accuracy, _ = starter.classify(Weights, Bias, trainData, trainTarget)
                 
         
-#==============================================================================
+            print('epoch #%i' % i)
+            #In the process of implementing saving the performance
+            #Save the per iteration errors: Error, Training Set performance, 
+            #Validation Set Performance, Test Set performance 
+            perfRecord.errorTrain[i] = sess.run(loss, feed_dict = {x: trainData, y: trainTarget})
+            perfRecord.errorValid[i] = sess.run(loss, feed_dict = {x: validData, y: validTarget})
+            perfRecord.errorTest[i] = sess.run(loss, feed_dict = {x: testData, y: testTarget})
+            _, perfRecord.trainSetAcc[i] ,_ = starter.classify(Weights, Bias, trainData, trainTarget)
+            _, perfRecord.validSetAcc[i] ,_ = starter.classify(Weights, Bias, validData, validTarget)
+            _, perfRecord.testSetAcc[i] ,_ = starter.classify(Weights, Bias, testData, testTarget)
+            
+        perfRecordAll["{0}".format(batchSizeParams[k])] = perfRecord #save the data     
+                
+#%% Question 3 Tensorflow Plot #Finish this 
+
+
+# Make the plots of errors and accuracies 
+ #errors
+plt.figure(figsize=(15,15))
+plt.subplot(2, 2, 1)
+plt.ylabel('Error')
+plt.xlabel('Iterations')
+plt.title('TrainingSet Error of Different Batch Size vs. Iterations of Gradient Descent')
+plt.plot(perfRecordAll["100"].errorTrain, 'r')
+plt.plot(perfRecordAll["700"].errorTrain, 'b') 
+plt.plot(perfRecordAll["1750"].errorTrain, 'g') 
+plt.legend(['Batch Size 100, fin. error = %f' % perfRecordAll["100"].errorTrain[-1] \
+            ,'Batch Size 700 fin. error = %f' % perfRecordAll["700"].errorTrain[-1]\
+            , 'Batch Size 1750 fin. error = %f' % perfRecordAll["1750"].errorTrain[-1]])
+
+plt.subplot(2, 2, 2)
+plt.ylabel('Error')
+plt.xlabel('Iterations')
+plt.title('ValidSet Error of Different Batch Size vs. Iterations of Gradient Descent')
+plt.plot(perfRecordAll["100"].errorValid, 'r')
+plt.plot(perfRecordAll["700"].errorValid, 'b') 
+plt.plot(perfRecordAll["1750"].errorValid, 'g') 
+plt.legend(['Batch Size 100, fin. error = %f' % perfRecordAll["100"].errorValid[-1] \
+            ,'Batch Size 700 fin. error = %f' % perfRecordAll["700"].errorValid[-1]\
+            , 'Batch Size 1750 fin. error = %f' % perfRecordAll["1750"].errorValid[-1]])
+
+plt.subplot(2, 2, 3)
+plt.ylabel('Error')
+plt.xlabel('Iterations')
+plt.title('TestSet Error of Different Batch Size vs. Iterations of Gradient Descent')
+plt.plot(perfRecordAll["100"].errorTest, 'r')
+plt.plot(perfRecordAll["700"].errorTest, 'b') 
+plt.plot(perfRecordAll["1750"].errorTest, 'g') 
+plt.legend(['Batch Size 100, fin. error = %f' % perfRecordAll["100"].errorTest[-1] \
+            ,'Batch Size 700 fin. error = %f' % perfRecordAll["700"].errorTest[-1]\
+             , 'Batch Size 1750 fin. error = %f' % perfRecordAll["1750"].errorTest[-1]])
+
+plt.savefig("Error plot P3Q3.png")
+
+#accuracies
+plt.figure(figsize=(15,15))
+plt.subplot(2, 2, 1)
+plt.ylabel('Accuracy')
+plt.xlabel('Iterations')
+plt.title('TrainingSet Accuracy of Different Batch Size vs. Iterations')
+plt.plot(perfRecordAll["100"].trainSetAcc, 'r')
+plt.plot(perfRecordAll["700"].trainSetAcc, 'b') 
+plt.plot(perfRecordAll["1750"].trainSetAcc, 'g') 
+plt.legend(['Batch Size 100, fin. acc = %f' % perfRecordAll["100"].trainSetAcc[-1] \
+            ,'Batch Size 700 fin. acc = %f' % perfRecordAll["700"].trainSetAcc[-1]\
+            , 'Batch Size 1750 fin. acc = %f' % perfRecordAll["1750"].trainSetAcc[-1]], loc = 4)
+
+plt.subplot(2, 2, 2)
+plt.ylabel('Accuracy')
+plt.xlabel('Iterations')
+plt.title('ValidSet Accuracy of Different Batch Size vs. Iterations')
+plt.plot(perfRecordAll["100"].validSetAcc, 'r')
+plt.plot(perfRecordAll["700"].validSetAcc, 'b') 
+plt.plot(perfRecordAll["1750"].validSetAcc, 'g') 
+plt.legend(['Batch Size 100, fin. acc = %f' % perfRecordAll["100"].validSetAcc[-1] \
+            ,'Batch Size 700 fin. acc = %f' % perfRecordAll["700"].validSetAcc[-1]\
+            , 'Batch Size 1750 fin. acc = %f' % perfRecordAll["1750"].validSetAcc[-1]], loc = 4)
+
+plt.subplot(2, 2, 3)
+plt.ylabel('Accuracy')
+plt.xlabel('Iterations')
+plt.title('TestSet Accuracy of Different Batch Size vs. Iterations o')
+plt.plot(perfRecordAll["100"].testSetAcc, 'r')
+plt.plot(perfRecordAll["700"].testSetAcc, 'b') 
+plt.plot(perfRecordAll["1750"].testSetAcc, 'g') 
+plt.legend(['Batch Size 100, fin. acc = %f' % perfRecordAll["100"].testSetAcc[-1] \
+            ,'Batch Size 700 fin. acc = %f' % perfRecordAll["700"].testSetAcc[-1]\
+            , 'Batch Size 1750 fin. acc = %f' % perfRecordAll["1750"].testSetAcc[-1]], loc = 4)
+
+plt.savefig("Accuracy plot P3Q3.png")
+
+#%% Question 4
+
+
+
+
+
+
+
+#%%
 #==============================================================================
 #Old test code
 # with tf.Session() as sess: #Used for viewing data
@@ -97,10 +254,8 @@ with tf.Session() as sess:
 
  #starter.classify(Weights, Bias, testData, testTarget)
 
-#%%
+
 #==============================================================================
-# 
-# 
 # #%% Question 3, Tuning Learning Rate
 # 
 # reg = 0;
@@ -109,7 +264,7 @@ with tf.Session() as sess:
 # 
 # for i in range(0, len(alphaParams)): 
 #     #reset the model
-#     W = np.random.normal(0, 0.1, size = [784,1])
+#     W = np.random.normal(0, 0.5, size = [784,1])
 #     b = 0 #np.zeros((3500,1)) #bias matrix
 #     
 #     alpha = alphaParams[i]
@@ -203,7 +358,7 @@ with tf.Session() as sess:
 # for i in range(0, len(regParams)): 
 #     #reset the model
 # 
-#     W = np.random.normal(0, 0.1, size = [784,1])
+#     W = np.random.normal(0, 0.5, size = [784,1])
 #     b = 0#np.zeros((3500,1)) #bias matrix
 #     
 #     reg = regParams[i]

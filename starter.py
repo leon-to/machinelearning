@@ -106,7 +106,7 @@ def grad_descent(W, b, trainData, trainTarget, alpha, iterations, reg, error_tol
 
     return W, b, perfRecord
     
-def buildGraph(lossType=None):
+def buildGraph(B1=None, B2=None, eps=None, lossType=None, learning_rate=None):
     
     
     
