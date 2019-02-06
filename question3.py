@@ -24,12 +24,11 @@ epochs = 5000 #5000
 
 
 #%% 3.1.5.2
-def plot_3_1_5_2(B1=0.9, B2=0.999, eps=1e-08):
+def plot_3_1_2(B1=0.9, B2=0.999, eps=1e-08, lossType='MSE'):
     epochs = 700
     batchSizeParams = [500] 
     
     perfRecordAll = {}
-    lossType = 'CE'
     
     W, b, x, y, loss, training_op, reg = starter.buildGraph(B1 = B1, B2 = B2, lossType = lossType, eps = eps)
     #W, b, x, y, loss, training_op, reg = starter.buildGraph(lossType = 'CE', eps=1e-08)
@@ -96,12 +95,11 @@ def plot_3_1_5_2(B1=0.9, B2=0.999, eps=1e-08):
                 , 'Test acc = %f' % perfRecordAll["500"].testSetAcc[-1]], loc=4)
     
 #%% 3.1.5.3
-def plot_3_1_5_3():
+def plot_3_1_3(lossType='MSE'):
     epochs = 700
     batchSizeParams = [100, 700, 1750] #[500] #[100, 700, 1750]
     
     perfRecordAll = {}
-    lossType = 'CE'
     
     W, b, x, y, loss, training_op, reg = starter.buildGraph(B1 = 0.9, B2 = 0.999, lossType = lossType, eps = 1e-08)
     #W, b, x, y, loss, training_op, reg = starter.buildGraph(lossType = 'CE', eps=1e-08)
@@ -215,5 +213,5 @@ def plot_3_1_5_3():
 
 
 #%% 3.1.5.4
-def plot_3_1_5_4(B1=0.9, B2=0.999, eps=1e-08):
-    plot_3_1_5_2(B1, B2, eps)
+def plot_3_1_4(B1=0.9, B2=0.999, eps=1e-08, lossType='MSE'):
+    plot_3_1_2(B1, B2, eps, lossType)

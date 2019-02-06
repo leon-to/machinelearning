@@ -50,19 +50,35 @@ def gradMSE(W, b, x, y, reg):
     grad_wrtW = np.multiply(grad_wrtW,x).sum(axis=0) + reg*W.T 
     grad_wrtW = grad_wrtW.T    
 
-    return grad_wrtb, grad_wrtW
+    return grad_wrtW, grad_wrtb
     
+  
 def crossEntropyLoss(W, b, x, y, reg):
-    # Your implementation here
+    def _sigmoid(z):
+        return 1/(1+np.exp(-z))
     
-    return 
+    y_predicted = _sigmoid (np.dot(x, W) + b)
+    L_D = - np.mean (y * np.log(y_predicted) + (1-y) * np.log(1-y_predicted))
     
+    L_W = reg/2 * (np.linalg.norm(W)**2)
+
+    L = L_D + L_W
+    return L   
+    
+
 def gradCE(W, b, x, y, reg):
-    # Your implementation here 
-    return
+    def _sigmoid(z):
+        return 1/(1+np.exp(-z))
+    
+    y_predicted = _sigmoid (np.dot(x, W) + b)
+    
+    N = len(y)
+    grad_W = 1/N * np.dot(x.T, y_predicted - y) + reg*W
+    grad_b = np.sum(y_predicted - y)
+    return grad_W, grad_b
     
 def grad_descent(W, b, trainData, trainTarget, alpha, iterations, reg, error_tol, \
-                 validData, validTarget, testData, testTarget ):                       
+                 validData, validTarget, testData, testTarget, lossType='MSE'):                       
     
     perfRecord = Performance(iterations) #Make the object to store performance
     
@@ -70,8 +86,13 @@ def grad_descent(W, b, trainData, trainTarget, alpha, iterations, reg, error_tol
     oldError = np.inf
     
     for i in range(0, iterations):
-        error = MSE(W, b, trainData, trainTarget, reg)
-        grad_wrtb, grad_wrtW = gradMSE(W, b, trainData, trainTarget, reg)
+        if lossType == 'MSE':  
+            error = MSE(W, b, trainData, trainTarget, reg)
+            grad_wrtW, grad_wrtb = gradMSE(W, b, trainData, trainTarget, reg)
+        elif lossType == 'CE':
+            error = crossEntropyLoss(W, b, trainData, trainTarget, reg)
+            grad_wrtW, grad_wrtb = gradCE(W, b, trainData, trainTarget, reg)
+            
         v_t_W = -grad_wrtW
         v_t_b = -grad_wrtb
         W = W + alpha*v_t_W
@@ -80,13 +101,19 @@ def grad_descent(W, b, trainData, trainTarget, alpha, iterations, reg, error_tol
         
         
         #Save the per iteration errors: Error, Training Set performance, 
-        #Validation Set Performance, Test Set performance 
+        #Validation Set Performance, Test Set performance
+        
         perfRecord.errorTrain[i] = error
-        perfRecord.errorValid[i] = MSE(W, b, validData, validTarget, reg)
-        perfRecord.errorTest[i] = MSE(W, b, testData, testTarget, reg)
-        _, perfRecord.trainSetAcc[i] ,_ = classify(W, b, trainData, trainTarget)
-        _, perfRecord.validSetAcc[i] ,_ = classify(W, b, validData, validTarget)
-        _, perfRecord.testSetAcc[i] ,_ = classify(W, b, testData, testTarget)
+        if lossType == 'MSE':
+            perfRecord.errorValid[i] = MSE(W, b, validData, validTarget, reg)
+            perfRecord.errorTest[i] = MSE(W, b, testData, testTarget, reg)
+        elif lossType == 'CE':
+            perfRecord.errorValid[i] = crossEntropyLoss(W, b, validData, validTarget, reg)
+            perfRecord.errorTest[i] = crossEntropyLoss(W, b, testData, testTarget, reg)
+            
+        _, perfRecord.trainSetAcc[i] ,_ = classify(W, b, trainData, trainTarget, lossType)
+        _, perfRecord.validSetAcc[i] ,_ = classify(W, b, validData, validTarget, lossType)
+        _, perfRecord.testSetAcc[i] ,_ = classify(W, b, testData, testTarget, lossType)
         
         errorDifference = oldError - error 
         oldError = error
