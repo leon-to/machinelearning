@@ -43,21 +43,44 @@ def shuffle(trainData, trainTarget):
     return data, target
 
 
-def relu(x):
-    # TODO
+def relu(x): #implements relu
+     return x * (x > 0)
 
 def softmax(x):
-    # TODO
+    #np.exp(x)/sum(np.exp(x)) #This implementation is not stable https://deepnotes.io/softmax-crossentropy
+    # Below is a more stable implementation, from same website
+    #exps = np.exp(x - np.max(x))
+    #return exps / np.sum(exps) 
+    return np.exp(x)/sum(np.exp(x))
+    
+def computeLayer(X, W, b):    
+    return np.matmul(W.transpose(), X) + b
 
+def forwardPass(trainData, Wh, Wo, bh, bo):
+    Z1 = np.matmul(trainData, Wh)  #sums of hidden layer, in rows
+    X1 = relu(Z1 + bh) #outputs of hidden layyer
+    Z2 = np.matmul(X1, Wo) #sums of output layer, in rows
+    Y =  softmax((Z2 + bo).T).T
+    Y = np.argmax(Y, axis = 1) #1 hot
+#==============================================================================
+#     newY = np.zeros((Y.shape[0], 10))
+#     for item in range(0, Y.shape[0]):
+#         newY[item][Y[item]] = 1
+#==============================================================================
 
-def computeLayer(X, W, b):
-    # TODO
+    return Y #returns labels
+    
+def CE(target, prediction): #input should have one-hot targets and predictions as rows
+    N = target.shape[0]
+    output = np.sum(target*np.log(prediction + 1e-9), axis=1)
+    output = -(1/N)*np.sum(output) 
+    return output
 
-def CE(target, prediction):
+def gradCE(target, prediction): #return average gradCE
+     
+    #perform row-wise dot product
+    N = target.shape[0]
+    output = np.sum(target*np.reciprocal(prediction), axis = 0)
+    output = -(1/N)*output #vector of averaged gradients according to the dataset
 
-    # TODO
-
-def gradCE(target, prediction):
-
-    # TODO
-
+    return output
