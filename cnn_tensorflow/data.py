@@ -19,8 +19,16 @@ class Data(object):
         self.y_valid_oh = y_valid_oh
         self.y_test_oh = y_test_oh
 
+    def shuffle(self, trainData, trainTarget):
+        np.random.seed(421)
+        randIndx = np.arange(len(trainData))
+        target = trainTarget
+        np.random.shuffle(randIndx)
+        data, target = trainData[randIndx], target[randIndx]
+        return data, target
+
     def __load(self, file_path):
-        with np.load() as data:
+        with np.load(file_path) as data:
             Data, Target = data["images"], data["labels"]
             np.random.seed(521)
             randIndx = np.arange(len(Data))

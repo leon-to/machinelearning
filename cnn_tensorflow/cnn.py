@@ -18,22 +18,15 @@ Created on Sun Mar  3 21:01:15 2019
 """
 
 import tensorflow as tf
-import numpy as np
-import starter as st
-import matplotlib.pyplot as plt
-
-x_train, x_valid, x_test, y_train, y_valid, y_test = st.loadData()
-y_train_oh, y_valid_oh, y_test_oh = st.convertOneHot(y_train, y_valid, y_test)
 
 
-#plt.imshow(x_train[0,:,:], cmap='gray')
+
 class ConvolutionalNeuralNetwork(object):
     def build_model(self,
             seed=421,#tf seed    
             alpha=10e-4, #learning rate for ADAM optimizer
             with_dropout=False, p=0.9, #dropout 
-            with_regularizers=False, beta=0.1, #regulizer
-            epochs=50, batch_size=32 #SGD
+            with_regularizers=False, beta=0.01 #regulizer
             ):
         #initialize
         tf.reset_default_graph()
@@ -128,16 +121,12 @@ class ConvolutionalNeuralNetwork(object):
         y_hat = tf.nn.softmax(fullconn10_layer)
         
         # 11. Cross Entropy loss
-        regularizers = tf.nn.l2_loss(W_conv) + tf.nn.l2_loss(W_fcl_784) + tf.nn.l2_loss(W_fcl_10)
+        # normal loss
+        self.loss = tf.reduce_mean (tf.nn.softmax_cross_entropy_with_logits_v2(logits=y_hat, labels=self.y))
+        # loss with l2 regularizers
         if with_regularizers:
-            self.loss = tf.reduce_mean(
-                    tf.add(
-                        tf.reduce_mean (tf.nn.sigmoid_cross_entropy_with_logits(logits=y_hat, labels=self.y)),
-                        beta*regularizers
-                    )
-                )
-        else:
-            self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=y_hat, labels=self.y))
+            regularizers = tf.nn.l2_loss(W_conv) + tf.nn.l2_loss(W_fcl_784) + tf.nn.l2_loss(W_fcl_10)
+            self.loss = tf.reduce_mean(self.loss + beta*regularizers)
         
         # optimizer
         self.optimizer = tf.train.AdamOptimizer(learning_rate=alpha).minimize(self.loss)
