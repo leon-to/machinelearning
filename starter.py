@@ -5,6 +5,16 @@ import time
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+class Performance:
+    def __init__(self): #needed to initialize arrays
+        self.iterations = []
+        self.errorTrain  = []
+        self.errorValid = []
+        self.errorTest = []
+        self.trainSetAcc = []
+        self.validSetAcc = []
+        self.testSetAcc = []
+
 # Load the data
 def loadData():
     with np.load("notMNIST.npz") as data:
@@ -49,9 +59,9 @@ def relu(x): #implements relu
 def softmax(x):
     #np.exp(x)/sum(np.exp(x)) #This implementation is not stable https://deepnotes.io/softmax-crossentropy
     # Below is a more stable implementation, from same website
-    #exps = np.exp(x - np.max(x))
-    #return exps / np.sum(exps) 
-    return np.exp(x)/sum(np.exp(x))
+    exps = np.exp(x - np.max(x))
+    return exps / np.sum(exps) 
+    #return np.exp(x)/sum(np.exp(x)) less stable
     
 def computeLayer(X, W, b):    
     return np.matmul(W.transpose(), X) + b
@@ -61,14 +71,15 @@ def forwardPass(trainData, Wh, Wo, bh, bo):
     X1 = relu(Z1 + bh) #outputs of hidden layyer
     Z2 = np.matmul(X1, Wo) #sums of output layer, in rows
     Y =  softmax((Z2 + bo).T).T
-    Y = np.argmax(Y, axis = 1) #1 hot
+    YoneHot = Y
+    Yclass = np.argmax(Y, axis = 1) #1 hot
 #==============================================================================
 #     newY = np.zeros((Y.shape[0], 10))
 #     for item in range(0, Y.shape[0]):
 #         newY[item][Y[item]] = 1
 #==============================================================================
 
-    return Y #returns labels
+    return YoneHot, Yclass #returns labels
     
 def CE(target, prediction): #input should have one-hot targets and predictions as rows
     N = target.shape[0]
