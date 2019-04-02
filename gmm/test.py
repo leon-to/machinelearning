@@ -36,8 +36,10 @@ x = tf.placeholder(tf.float32, shape = (N, D))
 pi    = tf.get_variable("pi", dtype=tf.float32, initializer=np.float32(np.full([K,1], 1/K)))
 
 #random_idx = tf.squeeze(tf.multinomial(tf.ones([1, tf.shape(x)[0]]), K))
-#mu = tf.Variable(tf.gather(x, random_idx), dtype=tf.float32)
-mu    = tf.get_variable("mu", [K, D], dtype=tf.float32, initializer=tf.random_uniform_initializer)
+rand_idx = np.random.randint(0, N-1, [K,D])
+mu = tf.Variable(tf.gather_nd(x, np.expand_dims( np.random.randint(0,N-1, K), 1)), dtype=tf.float32)
+#mu = tf.get_variable("mu", dtype=tf.float32, initializer=tf.gather_nd(x, [[0],[200],[234]]))
+#mu    = tf.get_variable("mu", [K, D], dtype=tf.float32, initializer=tf.random_uniform_initializer)
 sigma = tf.get_variable("sigma", [K, 1], dtype=tf.float32, initializer=tf.random_uniform_initializer)
 
 #mu    = tf.random.uniform(shape=[K, D], dtype=tf.float64)
@@ -98,7 +100,7 @@ optimizer = tf.train.GradientDescentOptimizer(0.0001).minimize(loss)
 init = tf.global_variables_initializer()
 
 with tf.Session() as sess:
-    sess.run(init)
+    sess.run(init, feed_dict = {x : data})
     for i in range(1000):
         mu_val, pi_val, dist_val, pdf_val, loss_val, _ = sess.run(
             [
