@@ -17,8 +17,11 @@ import tensorflow as tf
 import numpy as np
 import helper as hlp
 import math
+import matplotlib.pyplot as plt
 
-data = np.load('../data/data2D.npy')
+data = np.float32(np.load('../res/data2D.npy'))
+
+plt.scatter(data[:,0], data[:,1])
 [N, D] = np.shape(data)
 
 K = 3
@@ -28,52 +31,79 @@ tf.reset_default_graph()
 
 x = tf.placeholder(tf.float32, shape = (N, D))
 
+# initialization step
+
+pi    = tf.get_variable("pi", dtype=tf.float32, initializer=np.float32(np.full([K,1], 1/K)))
+
+#random_idx = tf.squeeze(tf.multinomial(tf.ones([1, tf.shape(x)[0]]), K))
+#mu = tf.Variable(tf.gather(x, random_idx), dtype=tf.float32)
 mu    = tf.get_variable("mu", [K, D], dtype=tf.float32, initializer=tf.random_uniform_initializer)
 sigma = tf.get_variable("sigma", [K, 1], dtype=tf.float32, initializer=tf.random_uniform_initializer)
-pi    = tf.get_variable("pi", [K, 1], dtype=tf.float32, initializer=tf.random_uniform_initializer)
+
+#mu    = tf.random.uniform(shape=[K, D], dtype=tf.float64)
+#sigma = tf.random.uniform(shape=[K, 1], dtype=tf.float64)
 
 # constraint
-mu = tf.exp(mu)
+sigma = tf.exp(sigma)
 log_pi = hlp.logsoftmax(pi)
 
-# distance
-pair_dist = tf.reduce_sum(
-    tf.square(
-        tf.subtract( # broadcasting substract NxKxD
-            tf.expand_dims(x, 1), # Nx1xD
-            tf.expand_dims(mu, 0), # 1xKxD
-        )
+# Expectation (E) Step: calculate posterior
+pair_dist = st.distanceFunc(x, mu)
+log_pdf = st.log_GaussPDF(x, mu, sigma)
+log_post = st.log_posterior(log_pdf, log_pi) # [NxK]
+
+# Maximization (M) Step
+# mu [K,D] = sum(pi*x) / sum(pi)
+pi = tf.reduce_sum(tf.exp(log_post), 0) # [NxK] -T-> [KxN] -> [Kx1]
+
+#ex_1 = tf.expand_dims(log_post,2)
+#log_x = tf.log(x)
+#ex_2 = tf.expand_dims(log_x,1)
+#logsumexp = hlp.reduce_logsumexp(ex_1 + ex_2, 0)
+#N_j = tf.expand_dims(hlp.reduce_logsumexp(log_post, reduction_indices=0), 1)
+#mu = tf.subtract(
+#    logsumexp,
+#    tf.expand_dims(hlp.reduce_logsumexp(log_post, reduction_indices=0), 1)
+#)
+mu = tf.divide(
+    tf.reduce_sum(
+        tf.multiply(
+            tf.expand_dims(tf.exp(log_post), 2),
+            tf.expand_dims(x,1)
+        ),
+        0
     ),
-    2
+    tf.expand_dims(tf.reduce_sum(tf.exp(log_post), 0), 1)        
 )
-
-# log pdf = -0.5*(x-mu)^2 / sigma^2 - log(2pi*sigma)
-log_pdf = tf.subtract(
-    -0.5*tf.div(pair_dist, tf.square(tf.transpose(sigma))),
-    tf.log(tf.sqrt(2*math.pi*tf.transpose(sigma)))          
+sigma = tf.exp(
+    tf.divide(
+        tf.reduce_sum(
+            tf.multiply(
+                tf.exp(log_post),
+                pair_dist
+            ),
+            0
+        ),
+        tf.reduce_sum(tf.exp(log_post), 0)        
+    )
 )
-
-# log posterior
-log_posterior = tf.add(log_pdf, tf.transpose(log_pi))
-
 # loss = - sum(log(sum(exp(log pi + log N))))
-loss = -1 * tf.reduce_sum(hlp.reduce_logsumexp(log_posterior))
-
+#loss = -1 * tf.reduce_sum(hlp.reduce_logsumexp(log_pdf + pi))
+#loss = st.compute_loss(x, mu, sigma, pi)
+loss = st.compute_loss(log_pdf, log_pi)
 
 # optimizer
-optimizer = tf.train.AdamOptimizer(learning_rate = 0.01, beta1=0.9, beta2=0.99,epsilon=1e-5).minimize(loss)
+optimizer = tf.train.GradientDescentOptimizer(0.0001).minimize(loss)
 
 init = tf.global_variables_initializer()
 
-with tf.Session() as session:
-    session.run(init)
-    print('mu:', mu.eval())
-    print('sigma:', sigma.eval())
-    print('pi:', pi.eval())
-    print('log pi:', log_pi.eval())
+with tf.Session() as sess:
+    sess.run(init)
     for i in range(1000):
-        dist_val, pdf_val, loss_val, _ = session.run(
+        mu_val, pi_val, dist_val, pdf_val, loss_val, _ = sess.run(
             [
+                mu, 
+                pi,
                 pair_dist,
                 log_pdf,
                 loss, 
@@ -81,7 +111,23 @@ with tf.Session() as session:
             ], 
             feed_dict = {x : data}
         )
-        print('Pair dist:', dist_val, 'Min:', np.min(dist_val), 'Max:', np.max(dist_val))
-        print('Pdf:', pdf_val, 'Min:', np.min(pdf_val), 'Max:', np.max(pdf_val))
+#        print('Pair dist:', dist_val, 'Min:', np.min(dist_val), 'Max:', np.max(dist_val))
+#        print('Pdf:', pdf_val, 'Min:', np.min(pdf_val), 'Max:', np.max(pdf_val))
+        print('mu:', mu_val)
+        print('pi:', pi_val)
         print('Loss:', loss_val) 
         
+        #debug
+#        print('Epoch:', i)
+#        ex_1_val, log_x_val, ex_2_val, logsumexp_val, N_j_val = sess.run(
+#            [ex_1, log_x, ex_2, logsumexp, N_j],
+#            feed_dict = {x : data}
+#        )
+#        print('ex 1', ex_1_val)
+#        print('ex 2', ex_2_val)
+#        print('log sum exp:', logsumexp_val)
+#        print('N j:', N_j_val)
+    
+        
+    for k in range(K):
+        plt.scatter(mu_val[k, 0], mu_val[k, 1])
