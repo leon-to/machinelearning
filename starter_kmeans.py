@@ -166,6 +166,7 @@ with tf.Session() as session:
         
 #%% Part 2 
 
+
 Kparams = [1,2,3,4,5]
 #K = 3
 plt.figure(figsize=(19,19))
@@ -356,6 +357,94 @@ for i in range(1,K + 1):
     plt.ylabel('Loss (Euclidean Distance)')
 
 plt.savefig('Q1P3loss.png')
+
+
+#%%
+#Part 2 Last part
+
+# Loading data
+#data = np.load('data2D.npy')
+data = np.load('data100D.npy')
+[num_pts, dim] = np.shape(data)
+
+is_valid = True
+# For Validation set
+if is_valid:
+  valid_batch = int(num_pts / 3.0)
+  np.random.seed(45689)
+  rnd_idx = np.arange(num_pts)
+  np.random.shuffle(rnd_idx)
+  val_data = data[rnd_idx[:valid_batch]]
+  data = data[rnd_idx[valid_batch:]]
+
+origData = np.load('data100D.npy')
+trainData = data
+validData = val_data
+lossVectorTrain = []
+lossVectorValid = []
+
+#Temporary random points, change this
+#Initialize the MU (centers), to be K random points. 
+np.random.seed(45689)
+[N, dim] = np.shape(trainData)
+
+Kparams = [5,10,15,20,30]
+
+
+#K = 3
+for K in Kparams:
+    
+    np.random.seed(400)
+    initCenters = np.random.normal(size = (K, dim))
+    
+    #Data storage
+    perfDataObject = perfData()
+    string = [];
+    
+    
+    #TF model
+    X = tf.placeholder(tf.float64, shape = (N, dim))
+    MU = tf.Variable(initCenters, name = 'MU')
+    loss = error(X,MU)
+    train_op = tf.train.AdamOptimizer(learning_rate = 0.01, beta1=0.9, beta2=0.99,epsilon=1e-5).minimize(loss)
+    
+    model = tf.global_variables_initializer()
+    
+    
+    percentage = []
+    with tf.Session() as session:
+        session.run(model)
+        for i in range(500):
+            _, lossCalcTrain = session.run([train_op, loss], feed_dict = {X : trainData})
+            outMU = session.run(MU)
+            
+            perfDataObject.loss.append(lossCalcTrain)
+            perfDataObject.lossValid.append(lossKMeansPy(validData, outMU))
+            
+            print(lossCalcTrain)
+            print('epoch = %i K = %i' % (i, K))
+    
+    lossVectorTrain.append(perfDataObject.loss[-1])
+    lossVectorValid.append(perfDataObject.lossValid[-1])
+
+    
+A = distanceFuncPy(origData, outMU)
+dataClusterID = A.argmin(axis = 1)
+plt.hist(dataClusterID, 30, histtype = 'bar')
+plt.title('Histogram of Cluster IDs for K = 30')        
+plt.xlabel('Bins of Cluster ID')
+plt.ylabel('Number')
+plt.savefig('Q2LastHist.png') 
+
+    
+#plt.plot(Kparams, lossVectorTrain)
+plt.plot(Kparams, lossVectorTrain, 'r')
+plt.plot(Kparams, lossVectorValid, 'g')
+plt.legend(['Training Loss', 'Valid Loss'])
+plt.title('Loss of Training Data At Different K')        
+plt.xlabel('K')
+plt.ylabel('Loss')
+plt.savefig('Q2LastLoss.png') 
 
 
 
